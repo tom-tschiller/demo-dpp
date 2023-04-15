@@ -7,6 +7,8 @@ import os
 import sys
 from urllib.parse import urlparse
 
+from aiohttp import ClientError
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from runners.agent_container import (  # noqa:E402
@@ -35,6 +37,7 @@ class Tier1Agent(AriesAgent):
         admin_port: int,
         no_auto: bool = False,
         aip: int = 20,
+        cred_type: str = "",
         endorser_role: str = None,
         **kwargs,
     ):
@@ -46,6 +49,7 @@ class Tier1Agent(AriesAgent):
             no_auto=no_auto,
             seed=None,
             aip=aip,
+            cred_type=cred_type,
             endorser_role=endorser_role,
             **kwargs,
         )
@@ -129,6 +133,7 @@ async def main(args):
             mediation=tier1_agent.mediation,
             wallet_type=tier1_agent.wallet_type,
             aip=tier1_agent.aip,
+            cred_type=tier1_agent.cred_type,
             endorser_role=tier1_agent.endorser_role,
         )
 
@@ -137,12 +142,18 @@ async def main(args):
         log_status("#9 Input faber.py invitation details")
         await input_invitation(tier1_agent)
 
-        options = "    (3) Send Message\n" "    (4) Input New Invitation\n"
+        options = (
+            "    (3) Send Message\n"
+            "    (4) Input New Invitation\n"
+            "    (7) List connections\n"
+            "    (8) List credentials\n"
+            "    (9) List presentations\n"
+        )
         if tier1_agent.endorser_role and tier1_agent.endorser_role == "author":
             options += "    (D) Set Endorser's DID\n"
         if tier1_agent.multitenant:
             options += "    (W) Create and/or Enable Wallet\n"
-        options += "    (X) Exit?\n[3/4/{}X] ".format(
+        options += "    (X) Exit?\n[] ".format(
             "W/" if tier1_agent.multitenant else "",
         )
         async for option in prompt_loop(options):
@@ -190,6 +201,24 @@ async def main(args):
                 # handle new invitation
                 log_status("Input new invitation details")
                 await input_invitation(tier1_agent)
+
+            elif option == "7":
+                try:
+                    await tier1_agent.agent.list_connections()
+                except ClientError:
+                    pass
+
+            elif option == "8":
+                try:
+                    await tier1_agent.agent.list_w3c_credentials()
+                except ClientError:
+                    pass
+
+            elif option == "9":
+                try:
+                    await tier1_agent.agent.list_presentations()
+                except ClientError:
+                    pass
 
         if tier1_agent.show_timing:
             timing = await tier1_agent.agent.fetch_timing()

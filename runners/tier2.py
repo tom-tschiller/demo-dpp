@@ -37,6 +37,7 @@ class Tier2Agent(AriesAgent):
         admin_port: int,
         no_auto: bool = False,
         aip: int = 20,
+        cred_type: str = "",
         endorser_role: str = None,
         **kwargs,
     ):
@@ -48,6 +49,7 @@ class Tier2Agent(AriesAgent):
             no_auto=no_auto,
             seed=None,
             aip=aip,
+            cred_type=cred_type,
             endorser_role=endorser_role,
             **kwargs,
         )
@@ -131,6 +133,7 @@ async def main(args):
             mediation=tier2_agent.mediation,
             wallet_type=tier2_agent.wallet_type,
             aip=tier2_agent.aip,
+            cred_type=tier2_agent.cred_type,
             endorser_role=tier2_agent.endorser_role,
         )
 
@@ -150,7 +153,7 @@ async def main(args):
             options += "    (D) Set Endorser's DID\n"
         if tier2_agent.multitenant:
             options += "    (W) Create and/or Enable Wallet\n"
-        options += "    (X) Exit?\n[3/4/{}X] ".format(
+        options += "    (X) Exit?\n[] ".format(
             "W/" if tier2_agent.multitenant else "",
         )
         async for option in prompt_loop(options):
@@ -201,19 +204,19 @@ async def main(args):
 
             elif option == "7":
                 try:
-                    await tier2_agent.list_connections()
+                    await tier2_agent.agent.list_connections()
                 except ClientError:
                     pass
 
             elif option == "8":
                 try:
-                    await tier2_agent.list_w3c_credentials()
+                    await tier2_agent.agent.list_w3c_credentials()
                 except ClientError:
                     pass
 
             elif option == "9":
                 try:
-                    await tier2_agent.list_presentations()
+                    await tier2_agent.agent.list_presentations()
                 except ClientError:
                     pass
 

@@ -1,0 +1,860 @@
+{
+  "results": [
+    {
+      "connection_id": "666674bb-ec55-4253-8cd7-a159134ee68e",
+      "created_at": "2023-04-15T08:48:52.410355Z",
+      "by_format": {
+        "pres_request": {
+          "dif": {
+            "options": {
+              "challenge": "014ecc6d-4262-4ae1-be45-1058116aed04",
+              "domain": "4jt78h47fh47"
+            },
+            "presentation_definition": {
+              "id": "f3aef884-9307-48f8-99bd-7214a708ff99",
+              "format": {
+                "ldp_vp": {
+                  "proof_type": [
+                    "BbsBlsSignature2020"
+                  ]
+                }
+              },
+              "input_descriptors": [
+                {
+                  "id": "citizenship_input_1",
+                  "name": "EU Driver's License",
+                  "schema": [
+                    {
+                      "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                    },
+                    {
+                      "uri": "https://w3id.org/citizenship#PermanentResident"
+                    }
+                  ],
+                  "constraints": {
+                    "limit_disclosure": "required",
+                    "fields": [
+                      {
+                        "path": [
+                          "$.credentialSubject.serialNumber"
+                        ],
+                        "filter": {
+                          "const": "111"
+                        }
+                      },
+                      {
+                        "path": [
+                          "$.credentialSubject.co2"
+                        ]
+                      },
+                      {
+                        "path": [
+                          "$.credentialSubject.previousTiers"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "pres": {
+          "dif": {
+            "@context": [
+              "https://www.w3.org/2018/credentials/v1",
+              "https://w3id.org/security/bbs/v1"
+            ],
+            "type": [
+              "VerifiablePresentation"
+            ],
+            "verifiableCredential": [
+              {
+                "@context": [
+                  "https://www.w3.org/2018/credentials/v1",
+                  "https://w3id.org/citizenship/v1",
+                  "https://schema.org/docs/jsonldcontext.json",
+                  "https://w3id.org/security/bbs/v1"
+                ],
+                "id": "https://credential.example.com/product/1",
+                "type": [
+                  "PermanentResident",
+                  "VerifiableCredential"
+                ],
+                "credentialSubject": {
+                  "id": "did:key:zUC76HvJHfEwxGQtzcU4t1vkMHjBZmoXJh4T8taYvrqMRQDvhv4s3iUAeaMeZLsumikdPBU9ETXstjC8Sum38SKfWp7vGsa5PcE9N9HMiseiXnzRHPd4x3ZNo1p2A2maHwJ9TUy",
+                  "type": "Product",
+                  "co2": {
+                    "type": "xsd:integer",
+                    "@value": "1000"
+                  },
+                  "previousTiers": {
+                    "id": "urn:bnid:_:c14n2",
+                    "type": "ItemList",
+                    "itemListElement": [
+                      {
+                        "id": "urn:bnid:_:c14n0",
+                        "type": "ListItem",
+                        "item": {
+                          "id": "https://credential.example.com/product/2",
+                          "description": "Product2",
+                          "holder": {
+                            "id": "https://credential.example.com/holder/2",
+                            "name": "tier2"
+                          }
+                        },
+                        "position": {
+                          "type": "xsd:integer",
+                          "@value": "1"
+                        }
+                      },
+                      {
+                        "id": "urn:bnid:_:c14n1",
+                        "type": "ListItem",
+                        "item": {
+                          "id": "https://credential.example.com/product/3",
+                          "description": "Product2",
+                          "holder": {
+                            "id": "https://credential.example.com/holder/3",
+                            "name": "tier2"
+                          }
+                        },
+                        "position": {
+                          "type": "xsd:integer",
+                          "@value": "2"
+                        }
+                      }
+                    ]
+                  },
+                  "serialNumber": "111"
+                },
+                "issuanceDate": "2020-01-01T12:00:00Z",
+                "issuer": "did:key:zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q",
+                "proof": {
+                  "type": "BbsBlsSignatureProof2020",
+                  "nonce": "TVkfdMpskRUd9/USJJENI5WKGZNCKwWXihkP5nbmiPjwC9J11+5prfdpcxV2VxbanXE=",
+                  "proofValue": "ABwP////pyJt6cvhsZ8wK50kGHASShTwaUa5wDVa83LtXRd4NGlRIxxcJAO+3BMIf5YjDkeSj9eCBMJ3/557IuMg+GQaARA1/Lz9xN5OD16VLeYGiUxXg8PFO8D9fwcrrtoiptrMo3QlwP+sdWfQG6K/8aBSgT7/Lrdc3ykBXBkW3IxKvEgtDuXxVF7bqKG7IsLK1phLAAAAdKYp1Q3EJxqnTSPw0zHPziU7ajmODNQ1mznKZLhBO74nRYDwmGTY7KKjZy1vYmeEAgAAAAJK6sdsec4dgoYJJ1QR22gD02x/1KP4CNu+aGAGYy3WJ2OZyrjjdZl8xPQbimBHiSxIGHZRMBY8C2uZDQ9Dz+gBhT6PvH6iBPAcC8Vp+PW3Du2n7IIeE1PXGdlOoSD3Ye/aAxwtjcWsHSegiMzBd0/LAAAAAjEwviTUJXFJbNWZ64AFofNGB6RZqK2BK76why5AaTpIAOzlg/OF0pYvH+rudq98LfYlL0klxX0JvTL3ubN8Oiw=",
+                  "verificationMethod": "did:key:zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q#zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q",
+                  "proofPurpose": "assertionMethod",
+                  "created": "2023-04-15T08:47:03.299779+00:00"
+                }
+              }
+            ],
+            "presentation_submission": {
+              "id": "6942cb00-56ab-41c4-9fc9-aaf280b73c91",
+              "definition_id": "f3aef884-9307-48f8-99bd-7214a708ff99",
+              "descriptor_map": [
+                {
+                  "id": "citizenship_input_1",
+                  "format": "ldp_vc",
+                  "path": "$.verifiableCredential[0]"
+                }
+              ]
+            },
+            "proof": {
+              "type": "BbsBlsSignature2020",
+              "verificationMethod": "did:key:zUC76HvJHfEwxGQtzcU4t1vkMHjBZmoXJh4T8taYvrqMRQDvhv4s3iUAeaMeZLsumikdPBU9ETXstjC8Sum38SKfWp7vGsa5PcE9N9HMiseiXnzRHPd4x3ZNo1p2A2maHwJ9TUy#zUC76HvJHfEwxGQtzcU4t1vkMHjBZmoXJh4T8taYvrqMRQDvhv4s3iUAeaMeZLsumikdPBU9ETXstjC8Sum38SKfWp7vGsa5PcE9N9HMiseiXnzRHPd4x3ZNo1p2A2maHwJ9TUy",
+              "created": "2023-04-15T08:48:55.092027+00:00",
+              "proofPurpose": "authentication",
+              "challenge": "014ecc6d-4262-4ae1-be45-1058116aed04",
+              "proofValue": "lpqjAMRjQ4m5329bytEkcB5skgB3ZTTeyfB/1XWBzkloVKkj79Ozy3O2l19OfPb7ROW6EnAkpB9+/bmd3CF+RBEkOf1KE7FQCsEANaIdEi5AQXf7BOvcNynCTWwmrjxO9euJPyj/9qUyd6lRUdlMoQ=="
+            }
+          }
+        }
+      },
+      "trace": false,
+      "verified": "true",
+      "pres_request": {
+        "@type": "https://didcomm.org/present-proof/2.0/request-presentation",
+        "@id": "b2b0c9b4-2604-44a2-ac68-f9bb3074eae6",
+        "will_confirm": true,
+        "formats": [
+          {
+            "attach_id": "dif",
+            "format": "dif/presentation-exchange/definitions@v1.0"
+          }
+        ],
+        "comment": "test proof request for json-ld",
+        "request_presentations~attach": [
+          {
+            "@id": "dif",
+            "mime-type": "application/json",
+            "data": {
+              "json": {
+                "options": {
+                  "challenge": "014ecc6d-4262-4ae1-be45-1058116aed04",
+                  "domain": "4jt78h47fh47"
+                },
+                "presentation_definition": {
+                  "id": "f3aef884-9307-48f8-99bd-7214a708ff99",
+                  "format": {
+                    "ldp_vp": {
+                      "proof_type": [
+                        "BbsBlsSignature2020"
+                      ]
+                    }
+                  },
+                  "input_descriptors": [
+                    {
+                      "id": "citizenship_input_1",
+                      "name": "EU Driver's License",
+                      "schema": [
+                        {
+                          "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                        },
+                        {
+                          "uri": "https://w3id.org/citizenship#PermanentResident"
+                        }
+                      ],
+                      "constraints": {
+                        "limit_disclosure": "required",
+                        "fields": [
+                          {
+                            "path": [
+                              "$.credentialSubject.serialNumber"
+                            ],
+                            "filter": {
+                              "const": "111"
+                            }
+                          },
+                          {
+                            "path": [
+                              "$.credentialSubject.co2"
+                            ]
+                          },
+                          {
+                            "path": [
+                              "$.credentialSubject.previousTiers"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "state": "done",
+      "thread_id": "b2b0c9b4-2604-44a2-ac68-f9bb3074eae6",
+      "initiator": "self",
+      "role": "verifier",
+      "auto_present": false,
+      "pres": {
+        "@type": "https://didcomm.org/present-proof/2.0/presentation",
+        "@id": "5c1e8c13-5ff3-4260-80a2-017cf0144d97",
+        "~thread": {
+          "thid": "b2b0c9b4-2604-44a2-ac68-f9bb3074eae6"
+        },
+        "formats": [
+          {
+            "attach_id": "dif",
+            "format": "dif/presentation-exchange/submission@v1.0"
+          }
+        ],
+        "presentations~attach": [
+          {
+            "@id": "dif",
+            "mime-type": "application/json",
+            "data": {
+              "json": {
+                "@context": [
+                  "https://www.w3.org/2018/credentials/v1",
+                  "https://w3id.org/security/bbs/v1"
+                ],
+                "type": [
+                  "VerifiablePresentation"
+                ],
+                "verifiableCredential": [
+                  {
+                    "@context": [
+                      "https://www.w3.org/2018/credentials/v1",
+                      "https://w3id.org/citizenship/v1",
+                      "https://schema.org/docs/jsonldcontext.json",
+                      "https://w3id.org/security/bbs/v1"
+                    ],
+                    "id": "https://credential.example.com/product/1",
+                    "type": [
+                      "PermanentResident",
+                      "VerifiableCredential"
+                    ],
+                    "credentialSubject": {
+                      "id": "did:key:zUC76HvJHfEwxGQtzcU4t1vkMHjBZmoXJh4T8taYvrqMRQDvhv4s3iUAeaMeZLsumikdPBU9ETXstjC8Sum38SKfWp7vGsa5PcE9N9HMiseiXnzRHPd4x3ZNo1p2A2maHwJ9TUy",
+                      "type": "Product",
+                      "co2": {
+                        "type": "xsd:integer",
+                        "@value": "1000"
+                      },
+                      "previousTiers": {
+                        "id": "urn:bnid:_:c14n2",
+                        "type": "ItemList",
+                        "itemListElement": [
+                          {
+                            "id": "urn:bnid:_:c14n0",
+                            "type": "ListItem",
+                            "item": {
+                              "id": "https://credential.example.com/product/2",
+                              "description": "Product2",
+                              "holder": {
+                                "id": "https://credential.example.com/holder/2",
+                                "name": "tier2"
+                              }
+                            },
+                            "position": {
+                              "type": "xsd:integer",
+                              "@value": "1"
+                            }
+                          },
+                          {
+                            "id": "urn:bnid:_:c14n1",
+                            "type": "ListItem",
+                            "item": {
+                              "id": "https://credential.example.com/product/3",
+                              "description": "Product2",
+                              "holder": {
+                                "id": "https://credential.example.com/holder/3",
+                                "name": "tier2"
+                              }
+                            },
+                            "position": {
+                              "type": "xsd:integer",
+                              "@value": "2"
+                            }
+                          }
+                        ]
+                      },
+                      "serialNumber": "111"
+                    },
+                    "issuanceDate": "2020-01-01T12:00:00Z",
+                    "issuer": "did:key:zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q",
+                    "proof": {
+                      "type": "BbsBlsSignatureProof2020",
+                      "nonce": "TVkfdMpskRUd9/USJJENI5WKGZNCKwWXihkP5nbmiPjwC9J11+5prfdpcxV2VxbanXE=",
+                      "proofValue": "ABwP////pyJt6cvhsZ8wK50kGHASShTwaUa5wDVa83LtXRd4NGlRIxxcJAO+3BMIf5YjDkeSj9eCBMJ3/557IuMg+GQaARA1/Lz9xN5OD16VLeYGiUxXg8PFO8D9fwcrrtoiptrMo3QlwP+sdWfQG6K/8aBSgT7/Lrdc3ykBXBkW3IxKvEgtDuXxVF7bqKG7IsLK1phLAAAAdKYp1Q3EJxqnTSPw0zHPziU7ajmODNQ1mznKZLhBO74nRYDwmGTY7KKjZy1vYmeEAgAAAAJK6sdsec4dgoYJJ1QR22gD02x/1KP4CNu+aGAGYy3WJ2OZyrjjdZl8xPQbimBHiSxIGHZRMBY8C2uZDQ9Dz+gBhT6PvH6iBPAcC8Vp+PW3Du2n7IIeE1PXGdlOoSD3Ye/aAxwtjcWsHSegiMzBd0/LAAAAAjEwviTUJXFJbNWZ64AFofNGB6RZqK2BK76why5AaTpIAOzlg/OF0pYvH+rudq98LfYlL0klxX0JvTL3ubN8Oiw=",
+                      "verificationMethod": "did:key:zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q#zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q",
+                      "proofPurpose": "assertionMethod",
+                      "created": "2023-04-15T08:47:03.299779+00:00"
+                    }
+                  }
+                ],
+                "presentation_submission": {
+                  "id": "6942cb00-56ab-41c4-9fc9-aaf280b73c91",
+                  "definition_id": "f3aef884-9307-48f8-99bd-7214a708ff99",
+                  "descriptor_map": [
+                    {
+                      "id": "citizenship_input_1",
+                      "format": "ldp_vc",
+                      "path": "$.verifiableCredential[0]"
+                    }
+                  ]
+                },
+                "proof": {
+                  "type": "BbsBlsSignature2020",
+                  "verificationMethod": "did:key:zUC76HvJHfEwxGQtzcU4t1vkMHjBZmoXJh4T8taYvrqMRQDvhv4s3iUAeaMeZLsumikdPBU9ETXstjC8Sum38SKfWp7vGsa5PcE9N9HMiseiXnzRHPd4x3ZNo1p2A2maHwJ9TUy#zUC76HvJHfEwxGQtzcU4t1vkMHjBZmoXJh4T8taYvrqMRQDvhv4s3iUAeaMeZLsumikdPBU9ETXstjC8Sum38SKfWp7vGsa5PcE9N9HMiseiXnzRHPd4x3ZNo1p2A2maHwJ9TUy",
+                  "created": "2023-04-15T08:48:55.092027+00:00",
+                  "proofPurpose": "authentication",
+                  "challenge": "014ecc6d-4262-4ae1-be45-1058116aed04",
+                  "proofValue": "lpqjAMRjQ4m5329bytEkcB5skgB3ZTTeyfB/1XWBzkloVKkj79Ozy3O2l19OfPb7ROW6EnAkpB9+/bmd3CF+RBEkOf1KE7FQCsEANaIdEi5AQXf7BOvcNynCTWwmrjxO9euJPyj/9qUyd6lRUdlMoQ=="
+                }
+              }
+            }
+          }
+        ]
+      },
+      "updated_at": "2023-04-15T08:49:04.609731Z",
+      "pres_ex_id": "fda9a8b2-4228-49e2-af9e-1e07fb22a51f"
+    },
+    {
+      "connection_id": "7c6e27b0-d536-4b4b-8ee6-ce75c8c7d157",
+      "created_at": "2023-04-15T08:49:04.741180Z",
+      "by_format": {
+        "pres_request": {
+          "dif": {
+            "options": {
+              "challenge": "447b0f47-47cf-40d3-a1ae-c55b985fd040",
+              "domain": "4jt78h47fh47"
+            },
+            "presentation_definition": {
+              "id": "4be16cc8-bd4c-4a1e-bf2b-654c725cd7dc",
+              "format": {
+                "ldp_vp": {
+                  "proof_type": [
+                    "BbsBlsSignature2020"
+                  ]
+                }
+              },
+              "input_descriptors": [
+                {
+                  "id": "citizenship_input_1",
+                  "name": "EU Driver's License",
+                  "schema": [
+                    {
+                      "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                    },
+                    {
+                      "uri": "https://w3id.org/citizenship#PermanentResident"
+                    }
+                  ],
+                  "constraints": {
+                    "limit_disclosure": "required",
+                    "fields": [
+                      {
+                        "path": [
+                          "$.id"
+                        ],
+                        "filter": {
+                          "const": "https://credential.example.com/product/2"
+                        }
+                      },
+                      {
+                        "path": [
+                          "$.credentialSubject.co2"
+                        ]
+                      },
+                      {
+                        "path": [
+                          "$.credentialSubject.previousTiers"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "pres": {
+          "dif": {
+            "@context": [
+              "https://www.w3.org/2018/credentials/v1",
+              "https://w3id.org/security/bbs/v1"
+            ],
+            "type": [
+              "VerifiablePresentation"
+            ],
+            "verifiableCredential": [
+              {
+                "@context": [
+                  "https://www.w3.org/2018/credentials/v1",
+                  "https://w3id.org/citizenship/v1",
+                  "https://schema.org/docs/jsonldcontext.json",
+                  "https://w3id.org/security/bbs/v1"
+                ],
+                "id": "https://credential.example.com/product/2",
+                "type": [
+                  "PermanentResident",
+                  "VerifiableCredential"
+                ],
+                "credentialSubject": {
+                  "id": "did:key:zUC7KYTLubdsVuDq4Q9M4UR2HDP4Jd6NZFzWEQBACZDqVmLz6EQU4VdziSEoCw9wKLtkDY1FygzVW8GA5KpXVRzPLJGgepAXEj7CrXZ8qQkTUuMJn5p9hJadL8Vds6rvcyHNNoj",
+                  "type": "Product",
+                  "co2": {
+                    "type": "xsd:integer",
+                    "@value": "300"
+                  },
+                  "previousTiers": {
+                    "id": "urn:bnid:_:c14n0"
+                  }
+                },
+                "issuanceDate": "2020-01-01T12:00:00Z",
+                "issuer": "did:key:zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q",
+                "proof": {
+                  "type": "BbsBlsSignatureProof2020",
+                  "nonce": "09L7oE1tXST+QRZVRgi94K1tILNVv/v1nsyETZ7504a2BCFLf3Dv0O6Fq2vyXPecOvM=",
+                  "proofValue": "AA0fv7JJJ4edOM00QKkJ8XC+8WLAQJ8ltEbTTesut+nxT5KYTO1PNz93kPNhZNq96VgMZLSek/iE37LcfVOhrFHjfjjFFR3inrnYc9OCQuzCpzroxxYVwt+aYBdOY78xFWnG3qoFoU/UB+sQ0eodoC5lwbvthlxkoYfCAUGijA0rd9KyrigjxGQ7Dr+A3z8Mhw7w7wAAAHSG3p0uSt+iGEiP9c7XHLF2U6Zz3yF/m7hE6OAFdHC+9F3Bh6nqm7gAewJkC9b4Ao8AAAACFbZjPAgmnqcy4d+Ou1zTyipCNLiRcWPqbwVBNv9mJKtnJ9TBQISRln7V/MnFC21bv14wZBVKgRtmKg9aHs9HSqHZF+ptT0/KHGJqwh/BRF17tjyzOf5+khcMbWkVbjJdOsm/VtJC37oH5UpWwsUYsAAAAAMmEhjTfHnOplw67TCV4POVnVS7ypmA1BEsrevSitKQfjJKcAfbUYNYY4aabWlw3egC0TJpvrNsNl/ioA/Q1O27LBeDzBZXJWSmWVRwlt5fmTNG0+djk8mWfVKmmafqXvg=",
+                  "verificationMethod": "did:key:zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q#zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q",
+                  "proofPurpose": "assertionMethod",
+                  "created": "2023-04-15T08:47:11.717591+00:00"
+                }
+              }
+            ],
+            "presentation_submission": {
+              "id": "ff5a8ebf-3b4b-4d34-b276-ce106e5c0484",
+              "definition_id": "4be16cc8-bd4c-4a1e-bf2b-654c725cd7dc",
+              "descriptor_map": [
+                {
+                  "id": "citizenship_input_1",
+                  "format": "ldp_vc",
+                  "path": "$.verifiableCredential[0]"
+                }
+              ]
+            },
+            "proof": {
+              "type": "BbsBlsSignature2020",
+              "verificationMethod": "did:key:zUC7KYTLubdsVuDq4Q9M4UR2HDP4Jd6NZFzWEQBACZDqVmLz6EQU4VdziSEoCw9wKLtkDY1FygzVW8GA5KpXVRzPLJGgepAXEj7CrXZ8qQkTUuMJn5p9hJadL8Vds6rvcyHNNoj#zUC7KYTLubdsVuDq4Q9M4UR2HDP4Jd6NZFzWEQBACZDqVmLz6EQU4VdziSEoCw9wKLtkDY1FygzVW8GA5KpXVRzPLJGgepAXEj7CrXZ8qQkTUuMJn5p9hJadL8Vds6rvcyHNNoj",
+              "created": "2023-04-15T08:49:07.375911+00:00",
+              "proofPurpose": "authentication",
+              "challenge": "447b0f47-47cf-40d3-a1ae-c55b985fd040",
+              "proofValue": "ksID7FUQg0BEcCa1oRRFxoB0796OXBgNGV1ICsPFM4arVJKfE9o/b7bz0QaJcy3mI8HQPky8as3pkn0KZzrVAkmN6vruE1ejp9c6YrSqnV1C6DBDqgTyihk4j5Y65TdfDSoGBzHZP/NOKEHcDk80Pw=="
+            }
+          }
+        }
+      },
+      "trace": false,
+      "verified": "true",
+      "pres_request": {
+        "@type": "https://didcomm.org/present-proof/2.0/request-presentation",
+        "@id": "5e8bff44-c7a3-47fe-8088-1d3427d33253",
+        "will_confirm": true,
+        "formats": [
+          {
+            "attach_id": "dif",
+            "format": "dif/presentation-exchange/definitions@v1.0"
+          }
+        ],
+        "comment": "test proof request for json-ld",
+        "request_presentations~attach": [
+          {
+            "@id": "dif",
+            "mime-type": "application/json",
+            "data": {
+              "json": {
+                "options": {
+                  "challenge": "447b0f47-47cf-40d3-a1ae-c55b985fd040",
+                  "domain": "4jt78h47fh47"
+                },
+                "presentation_definition": {
+                  "id": "4be16cc8-bd4c-4a1e-bf2b-654c725cd7dc",
+                  "format": {
+                    "ldp_vp": {
+                      "proof_type": [
+                        "BbsBlsSignature2020"
+                      ]
+                    }
+                  },
+                  "input_descriptors": [
+                    {
+                      "id": "citizenship_input_1",
+                      "name": "EU Driver's License",
+                      "schema": [
+                        {
+                          "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                        },
+                        {
+                          "uri": "https://w3id.org/citizenship#PermanentResident"
+                        }
+                      ],
+                      "constraints": {
+                        "limit_disclosure": "required",
+                        "fields": [
+                          {
+                            "path": [
+                              "$.id"
+                            ],
+                            "filter": {
+                              "const": "https://credential.example.com/product/2"
+                            }
+                          },
+                          {
+                            "path": [
+                              "$.credentialSubject.co2"
+                            ]
+                          },
+                          {
+                            "path": [
+                              "$.credentialSubject.previousTiers"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "state": "done",
+      "thread_id": "5e8bff44-c7a3-47fe-8088-1d3427d33253",
+      "initiator": "self",
+      "role": "verifier",
+      "auto_present": false,
+      "pres": {
+        "@type": "https://didcomm.org/present-proof/2.0/presentation",
+        "@id": "e125d277-872b-4db2-b4c7-28c5de307b9b",
+        "~thread": {
+          "thid": "5e8bff44-c7a3-47fe-8088-1d3427d33253"
+        },
+        "formats": [
+          {
+            "attach_id": "dif",
+            "format": "dif/presentation-exchange/submission@v1.0"
+          }
+        ],
+        "presentations~attach": [
+          {
+            "@id": "dif",
+            "mime-type": "application/json",
+            "data": {
+              "json": {
+                "@context": [
+                  "https://www.w3.org/2018/credentials/v1",
+                  "https://w3id.org/security/bbs/v1"
+                ],
+                "type": [
+                  "VerifiablePresentation"
+                ],
+                "verifiableCredential": [
+                  {
+                    "@context": [
+                      "https://www.w3.org/2018/credentials/v1",
+                      "https://w3id.org/citizenship/v1",
+                      "https://schema.org/docs/jsonldcontext.json",
+                      "https://w3id.org/security/bbs/v1"
+                    ],
+                    "id": "https://credential.example.com/product/2",
+                    "type": [
+                      "PermanentResident",
+                      "VerifiableCredential"
+                    ],
+                    "credentialSubject": {
+                      "id": "did:key:zUC7KYTLubdsVuDq4Q9M4UR2HDP4Jd6NZFzWEQBACZDqVmLz6EQU4VdziSEoCw9wKLtkDY1FygzVW8GA5KpXVRzPLJGgepAXEj7CrXZ8qQkTUuMJn5p9hJadL8Vds6rvcyHNNoj",
+                      "type": "Product",
+                      "co2": {
+                        "type": "xsd:integer",
+                        "@value": "300"
+                      },
+                      "previousTiers": {
+                        "id": "urn:bnid:_:c14n0"
+                      }
+                    },
+                    "issuanceDate": "2020-01-01T12:00:00Z",
+                    "issuer": "did:key:zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q",
+                    "proof": {
+                      "type": "BbsBlsSignatureProof2020",
+                      "nonce": "09L7oE1tXST+QRZVRgi94K1tILNVv/v1nsyETZ7504a2BCFLf3Dv0O6Fq2vyXPecOvM=",
+                      "proofValue": "AA0fv7JJJ4edOM00QKkJ8XC+8WLAQJ8ltEbTTesut+nxT5KYTO1PNz93kPNhZNq96VgMZLSek/iE37LcfVOhrFHjfjjFFR3inrnYc9OCQuzCpzroxxYVwt+aYBdOY78xFWnG3qoFoU/UB+sQ0eodoC5lwbvthlxkoYfCAUGijA0rd9KyrigjxGQ7Dr+A3z8Mhw7w7wAAAHSG3p0uSt+iGEiP9c7XHLF2U6Zz3yF/m7hE6OAFdHC+9F3Bh6nqm7gAewJkC9b4Ao8AAAACFbZjPAgmnqcy4d+Ou1zTyipCNLiRcWPqbwVBNv9mJKtnJ9TBQISRln7V/MnFC21bv14wZBVKgRtmKg9aHs9HSqHZF+ptT0/KHGJqwh/BRF17tjyzOf5+khcMbWkVbjJdOsm/VtJC37oH5UpWwsUYsAAAAAMmEhjTfHnOplw67TCV4POVnVS7ypmA1BEsrevSitKQfjJKcAfbUYNYY4aabWlw3egC0TJpvrNsNl/ioA/Q1O27LBeDzBZXJWSmWVRwlt5fmTNG0+djk8mWfVKmmafqXvg=",
+                      "verificationMethod": "did:key:zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q#zUC7Kg2TgGrAwddp9xpcnuei63AooAJZ3EuH8ZUW7JQhyZ44rb2kqsryYSUMr5bWLAfiftqBoe3PBFxGGYrVj2b6krxGNQ8RXXzXyz4S2j9XYFutZ4K6K94Ped1mermRKzGoJ5Q",
+                      "proofPurpose": "assertionMethod",
+                      "created": "2023-04-15T08:47:11.717591+00:00"
+                    }
+                  }
+                ],
+                "presentation_submission": {
+                  "id": "ff5a8ebf-3b4b-4d34-b276-ce106e5c0484",
+                  "definition_id": "4be16cc8-bd4c-4a1e-bf2b-654c725cd7dc",
+                  "descriptor_map": [
+                    {
+                      "id": "citizenship_input_1",
+                      "format": "ldp_vc",
+                      "path": "$.verifiableCredential[0]"
+                    }
+                  ]
+                },
+                "proof": {
+                  "type": "BbsBlsSignature2020",
+                  "verificationMethod": "did:key:zUC7KYTLubdsVuDq4Q9M4UR2HDP4Jd6NZFzWEQBACZDqVmLz6EQU4VdziSEoCw9wKLtkDY1FygzVW8GA5KpXVRzPLJGgepAXEj7CrXZ8qQkTUuMJn5p9hJadL8Vds6rvcyHNNoj#zUC7KYTLubdsVuDq4Q9M4UR2HDP4Jd6NZFzWEQBACZDqVmLz6EQU4VdziSEoCw9wKLtkDY1FygzVW8GA5KpXVRzPLJGgepAXEj7CrXZ8qQkTUuMJn5p9hJadL8Vds6rvcyHNNoj",
+                  "created": "2023-04-15T08:49:07.375911+00:00",
+                  "proofPurpose": "authentication",
+                  "challenge": "447b0f47-47cf-40d3-a1ae-c55b985fd040",
+                  "proofValue": "ksID7FUQg0BEcCa1oRRFxoB0796OXBgNGV1ICsPFM4arVJKfE9o/b7bz0QaJcy3mI8HQPky8as3pkn0KZzrVAkmN6vruE1ejp9c6YrSqnV1C6DBDqgTyihk4j5Y65TdfDSoGBzHZP/NOKEHcDk80Pw=="
+                }
+              }
+            }
+          }
+        ]
+      },
+      "updated_at": "2023-04-15T08:49:12.382912Z",
+      "pres_ex_id": "a5c9e753-5efe-47fb-a644-087809a9fd10"
+    },
+    {
+      "connection_id": "7c6e27b0-d536-4b4b-8ee6-ce75c8c7d157",
+      "created_at": "2023-04-15T08:49:04.836766Z",
+      "by_format": {
+        "pres_request": {
+          "dif": {
+            "options": {
+              "challenge": "a415827c-0e9c-411d-9973-63ba2ae84b7d",
+              "domain": "4jt78h47fh47"
+            },
+            "presentation_definition": {
+              "id": "c8db2b66-0cbe-4e0a-a1a0-f4645c9a7ee3",
+              "format": {
+                "ldp_vp": {
+                  "proof_type": [
+                    "BbsBlsSignature2020"
+                  ]
+                }
+              },
+              "input_descriptors": [
+                {
+                  "id": "citizenship_input_1",
+                  "name": "EU Driver's License",
+                  "schema": [
+                    {
+                      "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                    },
+                    {
+                      "uri": "https://w3id.org/citizenship#PermanentResident"
+                    }
+                  ],
+                  "constraints": {
+                    "limit_disclosure": "required",
+                    "fields": [
+                      {
+                        "path": [
+                          "$.id"
+                        ],
+                        "filter": {
+                          "const": "https://credential.example.com/product/3"
+                        }
+                      },
+                      {
+                        "path": [
+                          "$.credentialSubject.co2"
+                        ]
+                      },
+                      {
+                        "path": [
+                          "$.credentialSubject.previousTiers"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "pres": {
+          "dif": {
+            "@context": [
+              "https://www.w3.org/2018/credentials/v1",
+              "https://w3id.org/security/bbs/v1"
+            ],
+            "type": [
+              "VerifiablePresentation"
+            ],
+            "verifiableCredential": [],
+            "presentation_submission": {
+              "id": "21938c73-217d-493d-b904-64ef0efc093e",
+              "definition_id": "c8db2b66-0cbe-4e0a-a1a0-f4645c9a7ee3",
+              "descriptor_map": []
+            }
+          }
+        }
+      },
+      "trace": false,
+      "verified": "false",
+      "pres_request": {
+        "@type": "https://didcomm.org/present-proof/2.0/request-presentation",
+        "@id": "d3b5f287-b3ef-4bfa-b6e6-cb5a6e3ffccf",
+        "will_confirm": true,
+        "formats": [
+          {
+            "attach_id": "dif",
+            "format": "dif/presentation-exchange/definitions@v1.0"
+          }
+        ],
+        "comment": "test proof request for json-ld",
+        "request_presentations~attach": [
+          {
+            "@id": "dif",
+            "mime-type": "application/json",
+            "data": {
+              "json": {
+                "options": {
+                  "challenge": "a415827c-0e9c-411d-9973-63ba2ae84b7d",
+                  "domain": "4jt78h47fh47"
+                },
+                "presentation_definition": {
+                  "id": "c8db2b66-0cbe-4e0a-a1a0-f4645c9a7ee3",
+                  "format": {
+                    "ldp_vp": {
+                      "proof_type": [
+                        "BbsBlsSignature2020"
+                      ]
+                    }
+                  },
+                  "input_descriptors": [
+                    {
+                      "id": "citizenship_input_1",
+                      "name": "EU Driver's License",
+                      "schema": [
+                        {
+                          "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                        },
+                        {
+                          "uri": "https://w3id.org/citizenship#PermanentResident"
+                        }
+                      ],
+                      "constraints": {
+                        "limit_disclosure": "required",
+                        "fields": [
+                          {
+                            "path": [
+                              "$.id"
+                            ],
+                            "filter": {
+                              "const": "https://credential.example.com/product/3"
+                            }
+                          },
+                          {
+                            "path": [
+                              "$.credentialSubject.co2"
+                            ]
+                          },
+                          {
+                            "path": [
+                              "$.credentialSubject.previousTiers"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "state": "done",
+      "thread_id": "d3b5f287-b3ef-4bfa-b6e6-cb5a6e3ffccf",
+      "initiator": "self",
+      "role": "verifier",
+      "auto_present": false,
+      "pres": {
+        "@type": "https://didcomm.org/present-proof/2.0/presentation",
+        "@id": "7fd44458-82a0-49ce-87cf-9b9f0ebbc1c9",
+        "~thread": {
+          "thid": "d3b5f287-b3ef-4bfa-b6e6-cb5a6e3ffccf"
+        },
+        "formats": [
+          {
+            "attach_id": "dif",
+            "format": "dif/presentation-exchange/submission@v1.0"
+          }
+        ],
+        "presentations~attach": [
+          {
+            "@id": "dif",
+            "mime-type": "application/json",
+            "data": {
+              "json": {
+                "@context": [
+                  "https://www.w3.org/2018/credentials/v1",
+                  "https://w3id.org/security/bbs/v1"
+                ],
+                "type": [
+                  "VerifiablePresentation"
+                ],
+                "verifiableCredential": [],
+                "presentation_submission": {
+                  "id": "21938c73-217d-493d-b904-64ef0efc093e",
+                  "definition_id": "c8db2b66-0cbe-4e0a-a1a0-f4645c9a7ee3",
+                  "descriptor_map": []
+                }
+              }
+            }
+          }
+        ]
+      },
+      "updated_at": "2023-04-15T08:49:12.383153Z",
+      "pres_ex_id": "418e7110-beeb-4f6d-8a5d-9be11e656faa"
+    }
+  ]
+}

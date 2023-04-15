@@ -3,12 +3,16 @@ import base64
 import binascii
 import datetime
 import json
+import jsonpath_ng
+import jsonpath_ng.ext
 import logging
 import os
 import sys
-import time
+import uuid
 from urllib.parse import urlparse
 from qrcode import QRCode
+
+from aiohttp import ClientError
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -45,6 +49,7 @@ class Tier0Agent(AriesAgent):
         admin_port: int,
         no_auto: bool = False,
         aip: int = 20,
+        cred_type: str = "",
         endorser_role: str = None,
         **kwargs,
     ):
@@ -56,6 +61,7 @@ class Tier0Agent(AriesAgent):
             no_auto=no_auto,
             seed=None,
             aip=aip,
+            cred_type=cred_type,
             endorser_role=endorser_role,
             **kwargs,
         )
@@ -71,151 +77,75 @@ class Tier0Agent(AriesAgent):
     def connection_ready(self):
         return self._connection_ready.done() and self._connection_ready.result()
 
+    async def handle_basicmessages(self, message):
+        await super().handle_basicmessages(message)
+        try:
+            raise Exception('error')
+        except Exception as error:
+            log_msg('catch error' + repr(error))
+    async def handle_present_proof_v2_0(self, message):
+        await super().handle_present_proof_v2_0(message)
+        state = message.get("state")
+        pres_ex_id = message["pres_ex_id"]
+
+        try:
+
+            if state == "presentation-received":
+                jsonpath_expr = jsonpath_ng.ext.parse(
+                    f"$.by_format.pres.dif.verifiableCredential[0].credentialSubject.previousTiers")
+                result = jsonpath_expr.find(message)
+                test = [match.value for match in result][0]
+
+                for previousTier in test['itemListElement']:
+                    result = jsonpath_ng.ext.parse(f"$.item.id").find(previousTier)
+                    product_id = [match.value for match in result][0]
+
+                    result = jsonpath_ng.ext.parse(f"$.item.holder.name").find(previousTier)
+                    holder_name = [match.value for match in result][0]
+
+                    log_msg(f"Previours tier product_id: {product_id} / holder_name {holder_name}")
+
+                    connection_id = await self.get_connection_by_label(f"{holder_name}.agent")
+
+                    log_msg(f"Connection for tier2: {connection_id}")
+                    proof_request_web_request = (
+                        self.generate_proof_request_web_request_by_id(
+                            self.aip,
+                            self.cred_type,
+                            self.revocation,
+                            None,
+                            connection_id,
+                            product_id
+                        )
+                    )
+                    await self.admin_POST(
+                        "/present-proof-2.0/send-request", proof_request_web_request
+                    )
+
+        except Exception as error:
+            log_msg('catch error' + repr(error))
+
+
 
     def generate_proof_request_web_request(
-        self, aip, cred_type, revocation, exchange_tracing, connectionless=False
+        self, aip, cred_type, revocation, exchange_tracing, connection_id
     ):
-        age = 18
-        d = datetime.date.today()
-        birth_date = datetime.date(d.year - age, d.month, d.day)
-        birth_date_format = "%Y%m%d"
-        if aip == 10:
-            req_attrs = [
-                {
-                    "name": "name",
-                    "restrictions": [{"schema_name": "degree schema"}],
-                },
-                {
-                    "name": "date",
-                    "restrictions": [{"schema_name": "degree schema"}],
-                },
-            ]
-            if revocation:
-                req_attrs.append(
-                    {
-                        "name": "degree",
-                        "restrictions": [{"schema_name": "degree schema"}],
-                        "non_revoked": {"to": int(time.time() - 1)},
-                    },
-                )
-            else:
-                req_attrs.append(
-                    {
-                        "name": "degree",
-                        "restrictions": [{"schema_name": "degree schema"}],
-                    }
-                )
-            if SELF_ATTESTED:
-                # test self-attested claims
-                req_attrs.append(
-                    {"name": "self_attested_thing"},
-                )
-            req_preds = [
-                # test zero-knowledge proofs
-                {
-                    "name": "birthdate_dateint",
-                    "p_type": "<=",
-                    "p_value": int(birth_date.strftime(birth_date_format)),
-                    "restrictions": [{"schema_name": "degree schema"}],
-                }
-            ]
-            indy_proof_request = {
-                "name": "Proof of Education",
-                "version": "1.0",
-                "requested_attributes": {
-                    f"0_{req_attr['name']}_uuid": req_attr for req_attr in req_attrs
-                },
-                "requested_predicates": {
-                    f"0_{req_pred['name']}_GE_uuid": req_pred for req_pred in req_preds
-                },
-            }
+        challenge_id = str(uuid.uuid4())
+        presentation_id = str(uuid.uuid4())
 
-            if revocation:
-                indy_proof_request["non_revoked"] = {"to": int(time.time())}
-
-            proof_request_web_request = {
-                "proof_request": indy_proof_request,
-                "trace": exchange_tracing,
-            }
-            if not connectionless:
-                proof_request_web_request["connection_id"] = self.connection_id
-            return proof_request_web_request
-
-        elif aip == 20:
-            if cred_type == CRED_FORMAT_INDY:
-                req_attrs = [
-                    {
-                        "name": "name",
-                        "restrictions": [{"schema_name": "degree schema"}],
-                    },
-                    {
-                        "name": "date",
-                        "restrictions": [{"schema_name": "degree schema"}],
-                    },
-                ]
-                if revocation:
-                    req_attrs.append(
-                        {
-                            "name": "degree",
-                            "restrictions": [{"schema_name": "degree schema"}],
-                            "non_revoked": {"to": int(time.time() - 1)},
-                        },
-                    )
-                else:
-                    req_attrs.append(
-                        {
-                            "name": "degree",
-                            "restrictions": [{"schema_name": "degree schema"}],
-                        }
-                    )
-                if SELF_ATTESTED:
-                    # test self-attested claims
-                    req_attrs.append(
-                        {"name": "self_attested_thing"},
-                    )
-                req_preds = [
-                    # test zero-knowledge proofs
-                    {
-                        "name": "birthdate_dateint",
-                        "p_type": "<=",
-                        "p_value": int(birth_date.strftime(birth_date_format)),
-                        "restrictions": [{"schema_name": "degree schema"}],
-                    }
-                ]
-                indy_proof_request = {
-                    "name": "Proof of Education",
-                    "version": "1.0",
-                    "requested_attributes": {
-                        f"0_{req_attr['name']}_uuid": req_attr for req_attr in req_attrs
-                    },
-                    "requested_predicates": {
-                        f"0_{req_pred['name']}_GE_uuid": req_pred
-                        for req_pred in req_preds
-                    },
-                }
-
-                if revocation:
-                    indy_proof_request["non_revoked"] = {"to": int(time.time())}
-
-                proof_request_web_request = {
-                    "presentation_request": {"indy": indy_proof_request},
-                    "trace": exchange_tracing,
-                }
-                if not connectionless:
-                    proof_request_web_request["connection_id"] = self.connection_id
-                return proof_request_web_request
-
-            elif cred_type == CRED_FORMAT_JSON_LD:
+        if aip == 20:
+            if cred_type == CRED_FORMAT_JSON_LD:
                 proof_request_web_request = {
                     "comment": "test proof request for json-ld",
+                    "connection_id": connection_id,
                     "presentation_request": {
                         "dif": {
                             "options": {
-                                "challenge": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+                                "challenge": challenge_id,
                                 "domain": "4jt78h47fh47",
                             },
                             "presentation_definition": {
-                                "id": "32f54163-7166-48f1-93d8-ff217bdb0654",
+                                "id": presentation_id,
                                 "format": {"ldp_vp": {"proof_type": [SIG_TYPE_BLS]}},
                                 "input_descriptors": [
                                     {
@@ -231,28 +161,22 @@ class Tier0Agent(AriesAgent):
                                         ],
                                         "constraints": {
                                             "limit_disclosure": "required",
-                                            "is_holder": [
-                                                {
-                                                    "directive": "required",
-                                                    "field_id": [
-                                                        "1f44d55f-f161-4938-a659-f8026467f126"
-                                                    ],
-                                                }
-                                            ],
                                             "fields": [
                                                 {
-                                                    "id": "1f44d55f-f161-4938-a659-f8026467f126",
                                                     "path": [
-                                                        "$.credentialSubject.familyName"
+                                                        "$.credentialSubject.serialNumber"
                                                     ],
-                                                    "purpose": "The claim must be from one of the specified person",
-                                                    "filter": {"const": "SMITH"},
+                                                    "filter": {"const": "111"},
                                                 },
                                                 {
                                                     "path": [
-                                                        "$.credentialSubject.givenName"
+                                                        "$.credentialSubject.co2"
                                                     ],
-                                                    "purpose": "The claim must be from one of the specified person",
+                                                },
+                                                {
+                                                    "path": [
+                                                        "$.credentialSubject.previousTiers"
+                                                    ],
                                                 },
                                             ],
                                         },
@@ -262,8 +186,7 @@ class Tier0Agent(AriesAgent):
                         }
                     },
                 }
-                if not connectionless:
-                    proof_request_web_request["connection_id"] = self.connection_id
+
                 return proof_request_web_request
 
             else:
@@ -272,6 +195,73 @@ class Tier0Agent(AriesAgent):
         else:
             raise Exception(f"Error invalid AIP level: {self.aip}")
 
+    def generate_proof_request_web_request_by_id(
+        self, aip, cred_type, revocation, exchange_tracing, connection_id, product_id
+    ):
+        challenge_id = str(uuid.uuid4())
+        presentation_id = str(uuid.uuid4())
+
+        if aip == 20:
+            if cred_type == CRED_FORMAT_JSON_LD:
+                proof_request_web_request = {
+                    "comment": "test proof request for json-ld",
+                    "connection_id": connection_id,
+                    "presentation_request": {
+                        "dif": {
+                            "options": {
+                                "challenge": challenge_id,
+                                "domain": "4jt78h47fh47",
+                            },
+                            "presentation_definition": {
+                                "id": presentation_id,
+                                "format": {"ldp_vp": {"proof_type": [SIG_TYPE_BLS]}},
+                                "input_descriptors": [
+                                    {
+                                        "id": "citizenship_input_1",
+                                        "name": "EU Driver's License",
+                                        "schema": [
+                                            {
+                                                "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                                            },
+                                            {
+                                                "uri": "https://w3id.org/citizenship#PermanentResident"
+                                            },
+                                        ],
+                                        "constraints": {
+                                            "limit_disclosure": "required",
+                                            "fields": [
+                                                {
+                                                    "path": [
+                                                        "$.id"
+                                                    ],
+                                                    "filter": {"const": product_id},
+                                                },
+                                                {
+                                                    "path": [
+                                                        "$.credentialSubject.co2"
+                                                    ],
+                                                },
+                                                {
+                                                    "path": [
+                                                        "$.credentialSubject.previousTiers"
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                    }
+                                ],
+                            },
+                        }
+                    },
+                }
+
+                return proof_request_web_request
+
+            else:
+                raise Exception(f"Error invalid credential type: {self.cred_type}")
+
+        else:
+            raise Exception(f"Error invalid AIP level: {self.aip}")
 
 async def input_invitation(agent_container):
     agent_container.agent._connection_ready = asyncio.Future()
@@ -340,27 +330,35 @@ async def main(args):
             mediation=tier0_agent.mediation,
             wallet_type=tier0_agent.wallet_type,
             aip=tier0_agent.aip,
+            cred_type=tier0_agent.cred_type,
             endorser_role=tier0_agent.endorser_role,
         )
 
         await tier0_agent.initialize(the_agent=agent)
 
-        # log_status("#9 Input faber.py invitation details")
-        # await input_invitation(tier0_agent)
+        # generate an invitation for Alice
+        await tier0_agent.generate_invitation(
+            display_qr=True, reuse_connections=tier0_agent.reuse_connections, wait=True
+        )
+
+        log_msg(f"agent: {tier0_agent.agent}")
 
         exchange_tracing = False
         options = (
-            "    (2) Send Proof Request\n"
-            "    (2a) Send *Connectionless* Proof Request (requires a Mobile client)\n"
+            "    (2) Send Proof Request (tier1)\n"
+            "    (2a) Send Proof Request (tier2)\n"
             "    (3) Send Message\n"
             "    (4) Input New Invitation\n"
             "    (4a) Create New Invitation\n"
+            "    (7) List connections\n"
+            "    (8) List credentials\n"
+            "    (9) List presentations\n"
         )
         if tier0_agent.endorser_role and tier0_agent.endorser_role == "author":
             options += "    (D) Set Endorser's DID\n"
         if tier0_agent.multitenant:
             options += "    (W) Create and/or Enable Wallet\n"
-        options += "    (X) Exit?\n[2/2a/3/4/4a/{}X] ".format(
+        options += "    (X) Exit?\n[] ".format(
             "W/" if tier0_agent.multitenant else "",
         )
         async for option in prompt_loop(options):
@@ -397,39 +395,19 @@ async def main(args):
                     )
 
             elif option == "2":
-                log_status("#20 Request proof of degree from alice")
-                if tier0_agent.aip == 10:
-                    proof_request_web_request = (
-                        tier0_agent.agent.generate_proof_request_web_request(
-                            tier0_agent.aip,
-                            tier0_agent.cred_type,
-                            tier0_agent.revocation,
-                            exchange_tracing,
-                        )
-                    )
-                    await tier0_agent.agent.admin_POST(
-                        "/present-proof/send-request", proof_request_web_request
-                    )
-                    pass
+                log_status("#20 Request proof of degree from tier1")
 
-                elif tier0_agent.aip == 20:
-                    if tier0_agent.cred_type == CRED_FORMAT_INDY:
+                if tier0_agent.aip == 20:
+                    connection_id = await tier0_agent.agent.get_connection_by_label("tier1.agent")
+
+                    if tier0_agent.cred_type == CRED_FORMAT_JSON_LD:
                         proof_request_web_request = (
                             tier0_agent.agent.generate_proof_request_web_request(
                                 tier0_agent.aip,
                                 tier0_agent.cred_type,
                                 tier0_agent.revocation,
                                 exchange_tracing,
-                            )
-                        )
-
-                    elif tier0_agent.cred_type == CRED_FORMAT_JSON_LD:
-                        proof_request_web_request = (
-                            tier0_agent.agent.generate_proof_request_web_request(
-                                tier0_agent.aip,
-                                tier0_agent.cred_type,
-                                tier0_agent.revocation,
-                                exchange_tracing,
+                                connection_id,
                             )
                         )
 
@@ -446,85 +424,32 @@ async def main(args):
                     raise Exception(f"Error invalid AIP level: {tier0_agent.aip}")
 
             elif option == "2a":
-                log_status("#20 Request * Connectionless * proof of degree from alice")
-                if tier0_agent.aip == 10:
-                    proof_request_web_request = (
-                        tier0_agent.agent.generate_proof_request_web_request(
-                            tier0_agent.aip,
-                            tier0_agent.cred_type,
-                            tier0_agent.revocation,
-                            exchange_tracing,
-                            connectionless=True,
-                        )
-                    )
-                    proof_request = await tier0_agent.agent.admin_POST(
-                        "/present-proof/create-request", proof_request_web_request
-                    )
-                    pres_req_id = proof_request["presentation_exchange_id"]
-                    url = (
-                        os.getenv("WEBHOOK_TARGET")
-                        or (
-                            "http://"
-                            + os.getenv("DOCKERHOST").replace(
-                                "{PORT}", str(tier0_agent.agent.admin_port + 1)
-                            )
-                            + "/webhooks"
-                        )
-                    ) + f"/pres_req/{pres_req_id}/"
-                    log_msg(f"Proof request url: {url}")
-                    qr = QRCode(border=1)
-                    qr.add_data(url)
-                    log_msg(
-                        "Scan the following QR code to accept the proof request from a mobile agent."
-                    )
-                    qr.print_ascii(invert=True)
+                log_status("#20 Request proof of degree from tier2")
 
-                elif tier0_agent.aip == 20:
-                    if tier0_agent.cred_type == CRED_FORMAT_INDY:
+                if tier0_agent.aip == 20:
+                    connection_id = await tier0_agent.agent.get_connection_by_label("tier2.agent")
+
+                    if tier0_agent.cred_type == CRED_FORMAT_JSON_LD:
                         proof_request_web_request = (
-                            tier0_agent.agent.generate_proof_request_web_request(
+                            tier0_agent.agent.generate_proof_request_web_request_by_id(
                                 tier0_agent.aip,
                                 tier0_agent.cred_type,
                                 tier0_agent.revocation,
                                 exchange_tracing,
-                                connectionless=True,
+                                connection_id,
+                                "https://credential.example.com/product/2"
                             )
                         )
-                    elif tier0_agent.cred_type == CRED_FORMAT_JSON_LD:
-                        proof_request_web_request = (
-                            tier0_agent.agent.generate_proof_request_web_request(
-                                tier0_agent.aip,
-                                tier0_agent.cred_type,
-                                tier0_agent.revocation,
-                                exchange_tracing,
-                                connectionless=True,
-                            )
-                        )
+
                     else:
                         raise Exception(
                             "Error invalid credential type:" + tier0_agent.cred_type
                         )
 
-                    proof_request = await tier0_agent.agent.admin_POST(
-                        "/present-proof-2.0/create-request", proof_request_web_request
+                    await agent.admin_POST(
+                        "/present-proof-2.0/send-request", proof_request_web_request
                     )
-                    pres_req_id = proof_request["pres_ex_id"]
-                    url = (
-                        "http://"
-                        + os.getenv("DOCKERHOST").replace(
-                            "{PORT}", str(tier0_agent.agent.admin_port + 1)
-                        )
-                        + "/webhooks/pres_req/"
-                        + pres_req_id
-                        + "/"
-                    )
-                    log_msg(f"Proof request url: {url}")
-                    qr = QRCode(border=1)
-                    qr.add_data(url)
-                    log_msg(
-                        "Scan the following QR code to accept the proof request from a mobile agent."
-                    )
-                    qr.print_ascii(invert=True)
+
                 else:
                     raise Exception(f"Error invalid AIP level: {tier0_agent.aip}")
 
@@ -552,6 +477,23 @@ async def main(args):
                     wait=True,
                 )
 
+            elif option == "7":
+                try:
+                    await tier0_agent.agent.list_connections()
+                except ClientError:
+                    pass
+
+            elif option == "8":
+                try:
+                    await tier0_agent.agent.list_w3c_credentials()
+                except ClientError:
+                    pass
+
+            elif option == "9":
+                try:
+                    await tier0_agent.agent.list_presentations()
+                except ClientError:
+                    pass
 
         if tier0_agent.show_timing:
             timing = await tier0_agent.agent.fetch_timing()

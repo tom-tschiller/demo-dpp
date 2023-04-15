@@ -27,7 +27,6 @@ from runners.support.utils import (  # noqa:E402
     prompt_loop,
 )
 
-
 CRED_PREVIEW_TYPE = "https://didcomm.org/issue-credential/2.0/credential-preview"
 SELF_ATTESTED = os.getenv("SELF_ATTESTED")
 TAILS_FILE_COUNT = int(os.getenv("TAILS_FILE_COUNT", 100))
@@ -43,6 +42,7 @@ class IssuerAgent(AriesAgent):
         http_port: int,
         admin_port: int,
         no_auto: bool = False,
+        cred_type: str = "",
         endorser_role: str = None,
         revocation: bool = False,
         **kwargs,
@@ -53,6 +53,7 @@ class IssuerAgent(AriesAgent):
             admin_port,
             prefix="Issuer",
             no_auto=no_auto,
+            cred_type=cred_type,
             endorser_role=endorser_role,
             revocation=revocation,
             **kwargs,
@@ -72,73 +73,18 @@ class IssuerAgent(AriesAgent):
     def connection_ready(self):
         return self._connection_ready.done() and self._connection_ready.result()
 
-    def generate_credential_offer(self, aip, cred_type, cred_def_id, exchange_tracing):
-        age = 24
-        d = datetime.date.today()
-        birth_date = datetime.date(d.year - age, d.month, d.day)
-        birth_date_format = "%Y%m%d"
-        if aip == 10:
-            # define attributes to send for credential
-            self.cred_attrs[cred_def_id] = {
-                "name": "Alice Smith",
-                "date": "2018-05-28",
-                "degree": "Maths",
-                "birthdate_dateint": birth_date.strftime(birth_date_format),
-                "timestamp": str(int(time.time())),
-            }
+    def generate_credential_offer_tier1(self, aip, cred_type, cred_def_id, exchange_tracing, connection_id):
 
-            cred_preview = {
-                "@type": CRED_PREVIEW_TYPE,
-                "attributes": [
-                    {"name": n, "value": v}
-                    for (n, v) in self.cred_attrs[cred_def_id].items()
-                ],
-            }
-            offer_request = {
-                "connection_id": self.connection_id,
-                "cred_def_id": cred_def_id,
-                "comment": f"Offer on cred def id {cred_def_id}",
-                "auto_remove": False,
-                "credential_preview": cred_preview,
-                "trace": exchange_tracing,
-            }
-            return offer_request
-
-        elif aip == 20:
-            if cred_type == CRED_FORMAT_INDY:
-                self.cred_attrs[cred_def_id] = {
-                    "name": "Alice Smith",
-                    "date": "2018-05-28",
-                    "degree": "Maths",
-                    "birthdate_dateint": birth_date.strftime(birth_date_format),
-                    "timestamp": str(int(time.time())),
-                }
-
-                cred_preview = {
-                    "@type": CRED_PREVIEW_TYPE,
-                    "attributes": [
-                        {"name": n, "value": v}
-                        for (n, v) in self.cred_attrs[cred_def_id].items()
-                    ],
-                }
+        if aip == 20:
+            if cred_type == CRED_FORMAT_JSON_LD:
                 offer_request = {
-                    "connection_id": self.connection_id,
-                    "comment": f"Offer on cred def id {cred_def_id}",
-                    "auto_remove": False,
-                    "credential_preview": cred_preview,
-                    "filter": {"indy": {"cred_def_id": cred_def_id}},
-                    "trace": exchange_tracing,
-                }
-                return offer_request
-
-            elif cred_type == CRED_FORMAT_JSON_LD:
-                offer_request = {
-                    "connection_id": self.connection_id,
+                    "connection_id": connection_id,
                     "filter": {
                         "ld_proof": {
                             "credential": {
                                 "@context": [
                                     "https://www.w3.org/2018/credentials/v1",
+                                    "https://w3id.org/citizenship/v1",
                                     "https://schema.org/docs/jsonldcontext.json",
                                     "https://w3id.org/security/bbs/v1",
                                 ],
@@ -146,28 +92,39 @@ class IssuerAgent(AriesAgent):
                                     "VerifiableCredential",
                                     "PermanentResident",
                                 ],
-                                "id": "https://credential.example.com/product/1234567890",
+                                "id": "https://credential.example.com/product/1",
                                 "issuer": self.did,
                                 "issuanceDate": "2020-01-01T12:00:00Z",
                                 "credentialSubject": {
-                                    "type": ["PermanentResident"],
-                                    "description": "Schiene",
-                                    "serialnumber": "1234567890",
-                                    "co2production": 1000,
-                                    "co2packaging": 200,
-                                    "co2transport": 300,
+                                    "type": ["Product"],
+                                    "serialNumber": "111",
+                                    "co2": 1000,
                                     "previousTiers": {
                                         "@type": "ItemList",
                                         "itemListElement": [
                                             {
                                                 "@type": "ListItem",
                                                 "position": 1,
-                                                "id": "https://credential.example.com/product/222333444"
+                                                "item": {
+                                                    "id": "https://credential.example.com/product/2",
+                                                    "description": "Product2",
+                                                    "holder": {
+                                                        "id": "https://credential.example.com/holder/2",
+                                                        "name": "tier2",
+                                                    }
+                                                }
                                             },
                                             {
                                                 "@type": "ListItem",
                                                 "position": 2,
-                                                "id": "https://credential.example.com/product/333444555"
+                                                "item": {
+                                                    "id": "https://credential.example.com/product/3",
+                                                    "description": "Product2",
+                                                    "holder": {
+                                                        "id": "https://credential.example.com/holder/3",
+                                                        "name": "tier2",
+                                                    }
+                                                }
                                             }
                                         ]
                                     }
@@ -185,199 +142,41 @@ class IssuerAgent(AriesAgent):
         else:
             raise Exception(f"Error invalid AIP level: {self.aip}")
 
-    def generate_proof_request_web_request(
-        self, aip, cred_type, revocation, exchange_tracing, connectionless=False
-    ):
-        age = 18
-        d = datetime.date.today()
-        birth_date = datetime.date(d.year - age, d.month, d.day)
-        birth_date_format = "%Y%m%d"
-        if aip == 10:
-            req_attrs = [
-                {
-                    "name": "name",
-                    "restrictions": [{"schema_name": "degree schema"}],
-                },
-                {
-                    "name": "date",
-                    "restrictions": [{"schema_name": "degree schema"}],
-                },
-            ]
-            if revocation:
-                req_attrs.append(
-                    {
-                        "name": "degree",
-                        "restrictions": [{"schema_name": "degree schema"}],
-                        "non_revoked": {"to": int(time.time() - 1)},
-                    },
-                )
-            else:
-                req_attrs.append(
-                    {
-                        "name": "degree",
-                        "restrictions": [{"schema_name": "degree schema"}],
-                    }
-                )
-            if SELF_ATTESTED:
-                # test self-attested claims
-                req_attrs.append(
-                    {"name": "self_attested_thing"},
-                )
-            req_preds = [
-                # test zero-knowledge proofs
-                {
-                    "name": "birthdate_dateint",
-                    "p_type": "<=",
-                    "p_value": int(birth_date.strftime(birth_date_format)),
-                    "restrictions": [{"schema_name": "degree schema"}],
-                }
-            ]
-            indy_proof_request = {
-                "name": "Proof of Education",
-                "version": "1.0",
-                "requested_attributes": {
-                    f"0_{req_attr['name']}_uuid": req_attr for req_attr in req_attrs
-                },
-                "requested_predicates": {
-                    f"0_{req_pred['name']}_GE_uuid": req_pred for req_pred in req_preds
-                },
-            }
+    def generate_credential_offer_tier2(self, aip, cred_type, cred_def_id, exchange_tracing, connection_id):
 
-            if revocation:
-                indy_proof_request["non_revoked"] = {"to": int(time.time())}
-
-            proof_request_web_request = {
-                "proof_request": indy_proof_request,
-                "trace": exchange_tracing,
-            }
-            if not connectionless:
-                proof_request_web_request["connection_id"] = self.connection_id
-            return proof_request_web_request
-
-        elif aip == 20:
-            if cred_type == CRED_FORMAT_INDY:
-                req_attrs = [
-                    {
-                        "name": "name",
-                        "restrictions": [{"schema_name": "degree schema"}],
-                    },
-                    {
-                        "name": "date",
-                        "restrictions": [{"schema_name": "degree schema"}],
-                    },
-                ]
-                if revocation:
-                    req_attrs.append(
-                        {
-                            "name": "degree",
-                            "restrictions": [{"schema_name": "degree schema"}],
-                            "non_revoked": {"to": int(time.time() - 1)},
-                        },
-                    )
-                else:
-                    req_attrs.append(
-                        {
-                            "name": "degree",
-                            "restrictions": [{"schema_name": "degree schema"}],
-                        }
-                    )
-                if SELF_ATTESTED:
-                    # test self-attested claims
-                    req_attrs.append(
-                        {"name": "self_attested_thing"},
-                    )
-                req_preds = [
-                    # test zero-knowledge proofs
-                    {
-                        "name": "birthdate_dateint",
-                        "p_type": "<=",
-                        "p_value": int(birth_date.strftime(birth_date_format)),
-                        "restrictions": [{"schema_name": "degree schema"}],
-                    }
-                ]
-                indy_proof_request = {
-                    "name": "Proof of Education",
-                    "version": "1.0",
-                    "requested_attributes": {
-                        f"0_{req_attr['name']}_uuid": req_attr for req_attr in req_attrs
-                    },
-                    "requested_predicates": {
-                        f"0_{req_pred['name']}_GE_uuid": req_pred
-                        for req_pred in req_preds
-                    },
-                }
-
-                if revocation:
-                    indy_proof_request["non_revoked"] = {"to": int(time.time())}
-
-                proof_request_web_request = {
-                    "presentation_request": {"indy": indy_proof_request},
-                    "trace": exchange_tracing,
-                }
-                if not connectionless:
-                    proof_request_web_request["connection_id"] = self.connection_id
-                return proof_request_web_request
-
-            elif cred_type == CRED_FORMAT_JSON_LD:
-                proof_request_web_request = {
-                    "comment": "test proof request for json-ld",
-                    "presentation_request": {
-                        "dif": {
-                            "options": {
-                                "challenge": "3fa85f64-5717-4562-b3fc-2c963f66afa7",
-                                "domain": "4jt78h47fh47",
-                            },
-                            "presentation_definition": {
-                                "id": "32f54163-7166-48f1-93d8-ff217bdb0654",
-                                "format": {"ldp_vp": {"proof_type": [SIG_TYPE_BLS]}},
-                                "input_descriptors": [
-                                    {
-                                        "id": "citizenship_input_1",
-                                        "name": "EU Driver's License",
-                                        "schema": [
-                                            {
-                                                "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
-                                            },
-                                            {
-                                                "uri": "https://w3id.org/citizenship#PermanentResident"
-                                            },
-                                        ],
-                                        "constraints": {
-                                            "limit_disclosure": "required",
-                                            "is_holder": [
-                                                {
-                                                    "directive": "required",
-                                                    "field_id": [
-                                                        "1f44d55f-f161-4938-a659-f8026467f126"
-                                                    ],
-                                                }
-                                            ],
-                                            "fields": [
-                                                {
-                                                    "id": "1f44d55f-f161-4938-a659-f8026467f126",
-                                                    "path": [
-                                                        "$.credentialSubject.familyName"
-                                                    ],
-                                                    "purpose": "The claim must be from one of the specified person",
-                                                    "filter": {"const": "SMITH"},
-                                                },
-                                                {
-                                                    "path": [
-                                                        "$.credentialSubject.givenName"
-                                                    ],
-                                                    "purpose": "The claim must be from one of the specified person",
-                                                },
-                                            ],
-                                        },
-                                    }
+        if aip == 20:
+            if cred_type == CRED_FORMAT_JSON_LD:
+                offer_request = {
+                    "connection_id": connection_id,
+                    "filter": {
+                        "ld_proof": {
+                            "credential": {
+                                "@context": [
+                                    "https://www.w3.org/2018/credentials/v1",
+                                    "https://w3id.org/citizenship/v1",
+                                    "https://schema.org/docs/jsonldcontext.json",
+                                    "https://w3id.org/security/bbs/v1",
                                 ],
+                                "type": [
+                                    "VerifiableCredential",
+                                    "PermanentResident",
+                                ],
+                                "id": "https://credential.example.com/product/2",
+                                "issuer": self.did,
+                                "issuanceDate": "2020-01-01T12:00:00Z",
+                                "credentialSubject": {
+                                    "type": ["Product"],
+                                    "serialNumber": "222",
+                                    "co2": 300,
+                                    "previousTiers": {
+                                    }
+                                },
                             },
+                            "options": {"proofType": SIG_TYPE_BLS},
                         }
                     },
                 }
-                if not connectionless:
-                    proof_request_web_request["connection_id"] = self.connection_id
-                return proof_request_web_request
+                return offer_request
 
             else:
                 raise Exception(f"Error invalid credential type: {self.cred_type}")
@@ -413,6 +212,7 @@ async def main(args):
             wallet_type=issuer_agent.wallet_type,
             seed=issuer_agent.seed,
             aip=issuer_agent.aip,
+            cred_type=issuer_agent.cred_type,
             endorser_role=issuer_agent.endorser_role,
         )
 
@@ -447,20 +247,22 @@ async def main(args):
 
         exchange_tracing = False
         options = (
-            "    (1) Issue Credential\n"
-            "    (2) Send Proof Request\n"
-            "    (2a) Send *Connectionless* Proof Request (requires a Mobile client)\n"
+            "    (1a) Issue Credential tier1\n"
+            "    (1b) Issue Credential tier2\n"
             "    (3) Send Message\n"
             "    (4) Create New Invitation\n"
         )
         if issuer_agent.revocation:
             options += "    (5) Revoke Credential\n" "    (6) Publish Revocations\n"
+        options += "    (7) List connections\n"
+        options += "    (8) List credentials\n"
+        options += "    (9) List presentations\n"
         if issuer_agent.endorser_role and issuer_agent.endorser_role == "author":
             options += "    (D) Set Endorser's DID\n"
         if issuer_agent.multitenant:
             options += "    (W) Create and/or Enable Wallet\n"
         options += "    (T) Toggle tracing on credential/proof exchange\n"
-        options += "    (X) Exit?\n[1/2/3/4/{}{}T/X] ".format(
+        options += "    (X) Exit?\n[] ".format(
             "5/6/" if issuer_agent.revocation else "",
             "W/" if issuer_agent.multitenant else "",
         )
@@ -518,32 +320,46 @@ async def main(args):
                     )
                 )
 
-            elif option == "1":
-                log_status("#13 Issue credential offer to X")
+            elif option == "1a":
+                log_status("#13 Issue credential offer to tier1")
 
-                if issuer_agent.aip == 10:
-                    offer_request = issuer_agent.agent.generate_credential_offer(
-                        issuer_agent.aip, None, issuer_agent.cred_def_id, exchange_tracing
-                    )
-                    await issuer_agent.agent.admin_POST(
-                        "/issue-credential/send-offer", offer_request
-                    )
+                connection_id = await issuer_agent.agent.get_connection_by_label("tier1.agent")
 
-                elif issuer_agent.aip == 20:
-                    if issuer_agent.cred_type == CRED_FORMAT_INDY:
-                        offer_request = issuer_agent.agent.generate_credential_offer(
-                            issuer_agent.aip,
-                            issuer_agent.cred_type,
-                            issuer_agent.cred_def_id,
-                            exchange_tracing,
-                        )
-
-                    elif issuer_agent.cred_type == CRED_FORMAT_JSON_LD:
-                        offer_request = issuer_agent.agent.generate_credential_offer(
+                if issuer_agent.aip == 20:
+                    if issuer_agent.cred_type == CRED_FORMAT_JSON_LD:
+                        offer_request = issuer_agent.agent.generate_credential_offer_tier1(
                             issuer_agent.aip,
                             issuer_agent.cred_type,
                             None,
                             exchange_tracing,
+                            connection_id,
+                        )
+
+                    else:
+                        raise Exception(
+                            f"Error invalid credential type: {issuer_agent.cred_type}"
+                        )
+
+                    await issuer_agent.agent.admin_POST(
+                        "/issue-credential-2.0/send-offer", offer_request
+                    )
+
+                else:
+                    raise Exception(f"Error invalid AIP level: {issuer_agent.aip}")
+
+            elif option == "1b":
+                log_status("#13 Issue credential offer to tier2")
+
+                connection_id = await issuer_agent.agent.get_connection_by_label("tier2.agent")
+
+                if issuer_agent.aip == 20:
+                    if issuer_agent.cred_type == CRED_FORMAT_JSON_LD:
+                        offer_request = issuer_agent.agent.generate_credential_offer_tier2(
+                            issuer_agent.aip,
+                            issuer_agent.cred_type,
+                            None,
+                            exchange_tracing,
+                            connection_id,
                         )
 
                     else:
@@ -580,8 +396,8 @@ async def main(args):
                 rev_reg_id = (await prompt("Enter revocation registry ID: ")).strip()
                 cred_rev_id = (await prompt("Enter credential revocation ID: ")).strip()
                 publish = (
-                    await prompt("Publish now? [Y/N]: ", default="N")
-                ).strip() in "yY"
+                              await prompt("Publish now? [Y/N]: ", default="N")
+                          ).strip() in "yY"
                 try:
                     await issuer_agent.agent.admin_POST(
                         "/revocation/revoke",
@@ -610,6 +426,24 @@ async def main(args):
                             json.dumps([k for k in resp["rrid2crid"]], indent=4),
                         )
                     )
+                except ClientError:
+                    pass
+
+            elif option == "7":
+                try:
+                    await issuer_agent.agent.list_connections()
+                except ClientError:
+                    pass
+
+            elif option == "8":
+                try:
+                    await issuer_agent.agent.list_w3c_credentials()
+                except ClientError:
+                    pass
+
+            elif option == "9":
+                try:
+                    await issuer_agent.agent.list_presentations()
                 except ClientError:
                     pass
 
