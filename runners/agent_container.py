@@ -575,7 +575,7 @@ def arg_parser(ident: str = None, port: int = 8020):
         metavar=("<port>"),
         help="Choose the starting port number to listen on",
     )
-    if (not ident) or ((ident != "alice") and (ident != "tier0") and (ident != "tier1") and (ident != "tier2")):
+    if (not ident) or ((ident != "alice") and (ident != "tier0")):
         parser.add_argument(
             "--did-exchange",
             action="store_true",
@@ -590,7 +590,7 @@ def arg_parser(ident: str = None, port: int = 8020):
         metavar=("<tails-server-base-url>"),
         help="Tails server base url",
     )
-    if (not ident) or ((ident != "alice") and (ident != "tier1") and (ident != "tier2")):
+    if (not ident) or ((ident != "alice")):
         parser.add_argument(
             "--cred-type",
             type=str,
@@ -643,7 +643,7 @@ def arg_parser(ident: str = None, port: int = 8020):
             "directly."
         ),
     )
-    if (not ident) or ((ident != "alice") and (ident != "tier0") and (ident != "tier1") and (ident != "tier2")):
+    if (not ident) or ((ident != "alice") and (ident != "tier0")):
         parser.add_argument(
             "--reuse-connections",
             action="store_true",

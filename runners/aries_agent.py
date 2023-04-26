@@ -8,6 +8,7 @@ import os
 import random
 import sys
 import time
+import uuid
 import yaml
 
 from qrcode import QRCode
@@ -25,6 +26,7 @@ from runners.support.agent import (  # noqa:E402
     CRED_FORMAT_JSON_LD,
     DID_METHOD_KEY,
     KEY_TYPE_BLS,
+    SIG_TYPE_BLS,
 )
 from runners.support.utils import (  # noqa:E402
     check_requires,
@@ -651,6 +653,13 @@ class AriesAgent(DemoAgent):
 
         return result
 
+    async def list_dids(self):
+        dids = await self.admin_GET(
+            "/wallet/did"
+        )
+
+        log_json(dids)
+
     async def list_connections(self):
         connections = await self.admin_GET(
             "/connections"
@@ -672,6 +681,13 @@ class AriesAgent(DemoAgent):
 
         log_json(presentations)
 
+    async def get_presentations(self):
+        presentations = await self.admin_GET(
+            "/present-proof-2.0/records", {}
+        )
+
+        return presentations
+
     async def get_connection_by_label(self, label):
         connections = await self.admin_GET(
             "/connections"
@@ -681,3 +697,138 @@ class AriesAgent(DemoAgent):
         result = jsonpath_expr.find(connections)
         return [match.value for match in result][0]
 
+    def generate_proof_request_web_request_by_id(
+        self, aip, cred_type, revocation, exchange_tracing, connection_id, product_id
+    ):
+        challenge_id = str(uuid.uuid4())
+        presentation_id = str(uuid.uuid4())
+
+        if aip == 20:
+            if cred_type == CRED_FORMAT_JSON_LD:
+                proof_request_web_request = {
+                    "comment": "test proof request for json-ld",
+                    "connection_id": connection_id,
+                    "presentation_request": {
+                        "dif": {
+                            "options": {
+                                "challenge": challenge_id,
+                                "domain": "4jt78h47fh47",
+                            },
+                            "presentation_definition": {
+                                "id": presentation_id,
+                                "format": {"ldp_vp": {"proof_type": [SIG_TYPE_BLS]}},
+                                "input_descriptors": [
+                                    {
+                                        "id": "citizenship_input_1",
+                                        "name": "EU Driver's License",
+                                        "schema": [
+                                            {
+                                                "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                                            },
+                                            {
+                                                "uri": "https://w3id.org/citizenship#PermanentResident"
+                                            },
+                                        ],
+                                        "constraints": {
+                                            "limit_disclosure": "required",
+                                            "fields": [
+                                                {
+                                                    "path": [
+                                                        "$.id"
+                                                    ],
+                                                    "filter": {"const": product_id},
+                                                },
+                                                {
+                                                    "path": [
+                                                        "$.credentialSubject.co2"
+                                                    ],
+                                                },
+                                                {
+                                                    "path": [
+                                                        "$.credentialSubject.previousTiers"
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                    }
+                                ],
+                            },
+                        }
+                    },
+                }
+
+                return proof_request_web_request
+
+            else:
+                raise Exception(f"Error invalid credential type: {self.cred_type}")
+
+        else:
+            raise Exception(f"Error invalid AIP level: {self.aip}")
+
+    def generate_proof_request_web_request(
+        self, aip, cred_type, revocation, exchange_tracing, connection_id
+    ):
+        challenge_id = str(uuid.uuid4())
+        presentation_id = str(uuid.uuid4())
+
+        if aip == 20:
+            if cred_type == CRED_FORMAT_JSON_LD:
+                proof_request_web_request = {
+                    "comment": "test proof request for json-ld",
+                    "connection_id": connection_id,
+                    "presentation_request": {
+                        "dif": {
+                            "options": {
+                                "challenge": challenge_id,
+                                "domain": "4jt78h47fh47",
+                            },
+                            "presentation_definition": {
+                                "id": presentation_id,
+                                "format": {"ldp_vp": {"proof_type": [SIG_TYPE_BLS]}},
+                                "input_descriptors": [
+                                    {
+                                        "id": "citizenship_input_1",
+                                        "name": "EU Driver's License",
+                                        "schema": [
+                                            {
+                                                "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
+                                            },
+                                            {
+                                                "uri": "https://w3id.org/citizenship#PermanentResident"
+                                            },
+                                        ],
+                                        "constraints": {
+                                            "limit_disclosure": "required",
+                                            "fields": [
+                                                {
+                                                    "path": [
+                                                        "$.credentialSubject.serialNumber"
+                                                    ],
+                                                    "filter": {"const": "111"},
+                                                },
+                                                {
+                                                    "path": [
+                                                        "$.credentialSubject.co2"
+                                                    ],
+                                                },
+                                                {
+                                                    "path": [
+                                                        "$.credentialSubject.previousTiers"
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                    }
+                                ],
+                            },
+                        }
+                    },
+                }
+
+                return proof_request_web_request
+
+            else:
+                raise Exception(f"Error invalid credential type: {self.cred_type}")
+
+        else:
+            raise Exception(f"Error invalid AIP level: {self.aip}")

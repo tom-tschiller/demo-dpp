@@ -77,12 +77,6 @@ class Tier0Agent(AriesAgent):
     def connection_ready(self):
         return self._connection_ready.done() and self._connection_ready.result()
 
-    async def handle_basicmessages(self, message):
-        await super().handle_basicmessages(message)
-        try:
-            raise Exception('error')
-        except Exception as error:
-            log_msg('catch error' + repr(error))
     async def handle_present_proof_v2_0(self, message):
         await super().handle_present_proof_v2_0(message)
         state = message.get("state")
@@ -94,174 +88,40 @@ class Tier0Agent(AriesAgent):
                 jsonpath_expr = jsonpath_ng.ext.parse(
                     f"$.by_format.pres.dif.verifiableCredential[0].credentialSubject.previousTiers")
                 result = jsonpath_expr.find(message)
-                test = [match.value for match in result][0]
+                previous_tiers = [match.value for match in result][0]
 
-                for previousTier in test['itemListElement']:
-                    result = jsonpath_ng.ext.parse(f"$.item.id").find(previousTier)
-                    product_id = [match.value for match in result][0]
+                if previous_tiers:
+                    for previousTier in previous_tiers['itemListElement']:
+                        result = jsonpath_ng.ext.parse(f"$.item.id").find(previousTier)
+                        product_id = [match.value for match in result][0]
 
-                    result = jsonpath_ng.ext.parse(f"$.item.holder.name").find(previousTier)
-                    holder_name = [match.value for match in result][0]
+                        result = jsonpath_ng.ext.parse(f"$.item.holder.name").find(previousTier)
+                        holder_name = [match.value for match in result][0]
 
-                    log_msg(f"Previours tier product_id: {product_id} / holder_name {holder_name}")
+                        log_msg(f"Previours tier product_id: {product_id} / holder_name {holder_name}")
 
-                    connection_id = await self.get_connection_by_label(f"{holder_name}.agent")
+                        connection_id = await self.get_connection_by_label(f"{holder_name}.agent")
 
-                    log_msg(f"Connection for tier2: {connection_id}")
-                    proof_request_web_request = (
-                        self.generate_proof_request_web_request_by_id(
-                            self.aip,
-                            self.cred_type,
-                            self.revocation,
-                            None,
-                            connection_id,
-                            product_id
+                        log_msg(f"Connection for tier2: {connection_id}")
+                        proof_request_web_request = (
+                            self.generate_proof_request_web_request_by_id(
+                                self.aip,
+                                self.cred_type,
+                                self.revocation,
+                                None,
+                                connection_id,
+                                product_id
+                            )
                         )
-                    )
-                    await self.admin_POST(
-                        "/present-proof-2.0/send-request", proof_request_web_request
-                    )
-
+                        await self.admin_POST(
+                            "/present-proof-2.0/send-request", proof_request_web_request
+                        )
+                else:
+                    log_msg('no previous tiers found')
+                    await super().handle_issue_credential_v2_0(message)
         except Exception as error:
             log_msg('catch error' + repr(error))
 
-
-
-    def generate_proof_request_web_request(
-        self, aip, cred_type, revocation, exchange_tracing, connection_id
-    ):
-        challenge_id = str(uuid.uuid4())
-        presentation_id = str(uuid.uuid4())
-
-        if aip == 20:
-            if cred_type == CRED_FORMAT_JSON_LD:
-                proof_request_web_request = {
-                    "comment": "test proof request for json-ld",
-                    "connection_id": connection_id,
-                    "presentation_request": {
-                        "dif": {
-                            "options": {
-                                "challenge": challenge_id,
-                                "domain": "4jt78h47fh47",
-                            },
-                            "presentation_definition": {
-                                "id": presentation_id,
-                                "format": {"ldp_vp": {"proof_type": [SIG_TYPE_BLS]}},
-                                "input_descriptors": [
-                                    {
-                                        "id": "citizenship_input_1",
-                                        "name": "EU Driver's License",
-                                        "schema": [
-                                            {
-                                                "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
-                                            },
-                                            {
-                                                "uri": "https://w3id.org/citizenship#PermanentResident"
-                                            },
-                                        ],
-                                        "constraints": {
-                                            "limit_disclosure": "required",
-                                            "fields": [
-                                                {
-                                                    "path": [
-                                                        "$.credentialSubject.serialNumber"
-                                                    ],
-                                                    "filter": {"const": "111"},
-                                                },
-                                                {
-                                                    "path": [
-                                                        "$.credentialSubject.co2"
-                                                    ],
-                                                },
-                                                {
-                                                    "path": [
-                                                        "$.credentialSubject.previousTiers"
-                                                    ],
-                                                },
-                                            ],
-                                        },
-                                    }
-                                ],
-                            },
-                        }
-                    },
-                }
-
-                return proof_request_web_request
-
-            else:
-                raise Exception(f"Error invalid credential type: {self.cred_type}")
-
-        else:
-            raise Exception(f"Error invalid AIP level: {self.aip}")
-
-    def generate_proof_request_web_request_by_id(
-        self, aip, cred_type, revocation, exchange_tracing, connection_id, product_id
-    ):
-        challenge_id = str(uuid.uuid4())
-        presentation_id = str(uuid.uuid4())
-
-        if aip == 20:
-            if cred_type == CRED_FORMAT_JSON_LD:
-                proof_request_web_request = {
-                    "comment": "test proof request for json-ld",
-                    "connection_id": connection_id,
-                    "presentation_request": {
-                        "dif": {
-                            "options": {
-                                "challenge": challenge_id,
-                                "domain": "4jt78h47fh47",
-                            },
-                            "presentation_definition": {
-                                "id": presentation_id,
-                                "format": {"ldp_vp": {"proof_type": [SIG_TYPE_BLS]}},
-                                "input_descriptors": [
-                                    {
-                                        "id": "citizenship_input_1",
-                                        "name": "EU Driver's License",
-                                        "schema": [
-                                            {
-                                                "uri": "https://www.w3.org/2018/credentials#VerifiableCredential"
-                                            },
-                                            {
-                                                "uri": "https://w3id.org/citizenship#PermanentResident"
-                                            },
-                                        ],
-                                        "constraints": {
-                                            "limit_disclosure": "required",
-                                            "fields": [
-                                                {
-                                                    "path": [
-                                                        "$.id"
-                                                    ],
-                                                    "filter": {"const": product_id},
-                                                },
-                                                {
-                                                    "path": [
-                                                        "$.credentialSubject.co2"
-                                                    ],
-                                                },
-                                                {
-                                                    "path": [
-                                                        "$.credentialSubject.previousTiers"
-                                                    ],
-                                                },
-                                            ],
-                                        },
-                                    }
-                                ],
-                            },
-                        }
-                    },
-                }
-
-                return proof_request_web_request
-
-            else:
-                raise Exception(f"Error invalid credential type: {self.cred_type}")
-
-        else:
-            raise Exception(f"Error invalid AIP level: {self.aip}")
 
 async def input_invitation(agent_container):
     agent_container.agent._connection_ready = asyncio.Future()
@@ -351,6 +211,7 @@ async def main(args):
             "    (4) Input New Invitation\n"
             "    (4a) Create New Invitation\n"
             "    (7) List connections\n"
+            "    (7a) List DIDs\n"
             "    (8) List credentials\n"
             "    (9) List presentations\n"
         )
@@ -480,6 +341,12 @@ async def main(args):
             elif option == "7":
                 try:
                     await tier0_agent.agent.list_connections()
+                except ClientError:
+                    pass
+
+            elif option == "7a":
+                try:
+                    await tier0_agent.agent.list_dids()
                 except ClientError:
                     pass
 

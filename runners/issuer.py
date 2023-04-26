@@ -1,5 +1,7 @@
 import asyncio
 import json
+import jsonpath_ng
+import jsonpath_ng.ext
 import logging
 import os
 import sys
@@ -19,8 +21,10 @@ from runners.support.agent import (  # noqa:E402
     CRED_FORMAT_INDY,
     CRED_FORMAT_JSON_LD,
     SIG_TYPE_BLS,
+    SIG_TYPE_ED25519,
 )
 from runners.support.utils import (  # noqa:E402
+    log_json,
     log_msg,
     log_status,
     prompt,
@@ -184,6 +188,60 @@ class IssuerAgent(AriesAgent):
         else:
             raise Exception(f"Error invalid AIP level: {self.aip}")
 
+    # async def handle_issue_credential_v2_0(self, message):
+    #     state = message.get("state")
+    #     cred_ex_id = message["cred_ex_id"]
+    #
+    #     self.log(f"Credential: state = {state}, cred_ex_id = {cred_ex_id}")
+    #     self.log_json(message)
+    #
+    #     try:
+    #
+    #         if state == "request-received":
+    #             log_status("#17 Check credential request")
+    #             jsonpath_expr = jsonpath_ng.ext.parse(
+    #                 f"$.by_format.cred_request.ld_proof.credential.credentialSubject.previousTiers")
+    #
+    #             result = jsonpath_expr.find(message)
+    #             previous_tiers = [match.value for match in result][0]
+    #
+    #             if previous_tiers:
+    #                 for previousTier in previous_tiers['itemListElement']:
+    #                     result = jsonpath_ng.ext.parse(f"$.item.id").find(previousTier)
+    #                     product_id = [match.value for match in result][0]
+    #
+    #                     result = jsonpath_ng.ext.parse(f"$.item.holder.name").find(previousTier)
+    #                     holder_name = [match.value for match in result][0]
+    #
+    #                     log_msg(f"Previous tier product_id: {product_id} / holder_name {holder_name}")
+    #
+    #                     connection_id = await self.get_connection_by_label(f"{holder_name}.agent")
+    #
+    #                     if connection_id:
+    #                         log_msg(f"Connection for tier2: {connection_id}")
+    #                         proof_request_web_request = (
+    #                             self.generate_proof_request_web_request_by_id(
+    #                                 self.aip,
+    #                                 self.cred_type,
+    #                                 self.revocation,
+    #                                 None,
+    #                                 connection_id,
+    #                                 product_id
+    #                             )
+    #                         )
+    #                         await self.admin_POST(
+    #                             "/present-proof-2.0/send-request", proof_request_web_request
+    #                         )
+    #                         # TODO: check if all previous tiers are checked, then issue the credential
+    #                         # await super().handle_issue_credential_v2_0(message)
+    #                     else:
+    #                         log_msg(f"connection not found for {holder_name}.agent")
+    #             else:
+    #                 log_msg('no previous tiers found, issue credential')
+    #                 await super().handle_issue_credential_v2_0(message)
+    #
+    #     except Exception as error:
+    #         log_msg('catch error' + repr(error))
 
 async def main(args):
     issuer_agent = await create_agent_with_args(args, ident="issuer")
@@ -255,6 +313,7 @@ async def main(args):
         if issuer_agent.revocation:
             options += "    (5) Revoke Credential\n" "    (6) Publish Revocations\n"
         options += "    (7) List connections\n"
+        options += "    (7a) List DIDs\n"
         options += "    (8) List credentials\n"
         options += "    (9) List presentations\n"
         if issuer_agent.endorser_role and issuer_agent.endorser_role == "author":
@@ -432,6 +491,12 @@ async def main(args):
             elif option == "7":
                 try:
                     await issuer_agent.agent.list_connections()
+                except ClientError:
+                    pass
+
+            elif option == "7a":
+                try:
+                    await issuer_agent.agent.list_dids()
                 except ClientError:
                     pass
 

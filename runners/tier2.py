@@ -16,6 +16,12 @@ from runners.agent_container import (  # noqa:E402
     create_agent_with_args,
     AriesAgent,
 )
+from runners.support.agent import (  # noqa:E402
+    CRED_FORMAT_INDY,
+    CRED_FORMAT_JSON_LD,
+    SIG_TYPE_BLS,
+    SIG_TYPE_ED25519,
+)
 from runners.support.utils import (  # noqa:E402
     check_requires,
     log_msg,
@@ -65,6 +71,50 @@ class Tier2Agent(AriesAgent):
     def connection_ready(self):
         return self._connection_ready.done() and self._connection_ready.result()
 
+    def send_credential_request_tier2(self, aip, cred_type, issuer_did, connection_id):
+
+        if aip == 20:
+            if cred_type == CRED_FORMAT_JSON_LD:
+                holder_did = f"did:sov:{self.did}"
+                # issuer_did = "did:sov:EivNVN4M2YXJ94Q7uCxxdx"
+                offer_request = {
+                    "connection_id": connection_id,
+                    "holder_did": holder_did,
+                    "filter": {
+                        "ld_proof": {
+                            "credential": {
+                                "@context": [
+                                    "https://www.w3.org/2018/credentials/v1",
+                                    "https://w3id.org/citizenship/v1",
+                                    "https://schema.org/docs/jsonldcontext.json",
+                                    "https://w3id.org/security/bbs/v1",
+                                ],
+                                "type": [
+                                    "VerifiableCredential",
+                                    "PermanentResident",
+                                ],
+                                "id": "https://credential.example.com/product/2",
+                                "issuer": issuer_did,
+                                "issuanceDate": "2020-01-01T12:00:00Z",
+                                "credentialSubject": {
+                                    "type": ["Product"],
+                                    "serialNumber": "222",
+                                    "co2": 300,
+                                    "previousTiers": {
+                                    }
+                                },
+                            },
+                            "options": {"proofType": SIG_TYPE_BLS},
+                        }
+                    },
+                }
+                return offer_request
+
+            else:
+                raise Exception(f"Error invalid credential type: {self.cred_type}")
+
+        else:
+            raise Exception(f"Error invalid AIP level: {self.aip}")
 
 async def input_invitation(agent_container):
     agent_container.agent._connection_ready = asyncio.Future()
@@ -143,9 +193,11 @@ async def main(args):
         await input_invitation(tier2_agent)
 
         options = (
+            "    (1) Send Credential Request\n"
             "    (3) Send Message\n"
             "    (4) Input New Invitation\n"
             "    (7) List connections\n"
+            "    (7a) List DIDs\n"
             "    (8) List credentials\n"
             "    (9) List presentations\n"
         )
@@ -189,6 +241,31 @@ async def main(args):
                         taa_accept=tier2_agent.taa_accept,
                     )
 
+            elif option == "1":
+                log_status("Request credential from issuer")
+
+                connection_id = await tier2_agent.agent.get_connection_by_label("issuer.agent")
+
+                issuer_did = await prompt("Issuer DID: ")
+
+                if tier2_agent.aip == 20:
+                    if tier2_agent.cred_type == CRED_FORMAT_JSON_LD:
+                        offer_request = tier2_agent.agent.send_credential_request_tier2(
+                            tier2_agent.aip,
+                            tier2_agent.cred_type,
+                            issuer_did,
+                            connection_id,
+                        )
+
+                    else:
+                        raise Exception(
+                            f"Error invalid credential type: {tier2_agent.cred_type}"
+                        )
+
+                    await tier2_agent.agent.admin_POST(
+                        "/issue-credential-2.0/send-request", offer_request
+                    )
+
             elif option == "3":
                 msg = await prompt("Enter message: ")
                 if msg:
@@ -205,6 +282,12 @@ async def main(args):
             elif option == "7":
                 try:
                     await tier2_agent.agent.list_connections()
+                except ClientError:
+                    pass
+
+            elif option == "7a":
+                try:
+                    await tier2_agent.agent.list_dids()
                 except ClientError:
                     pass
 
